@@ -42,7 +42,17 @@ func main() {
 		body, _ := io.ReadAll(resp.Body)
 		var result map[string]interface{}
 		json.Unmarshal(body, &result)
-
+		// Preprocess
+		data := result["data"]
+		for _, value := range data.([]interface{}) {
+			listLocation := value.(map[string]interface{})["workingLocations"]
+			for _, locData := range listLocation.([]interface{}) {
+				geoLoc := locData.(map[string]interface{})["geoLoc"]
+				lat := geoLoc.(map[string]interface{})["lat"]
+				lng := geoLoc.(map[string]interface{})["lon"]
+				locData.(map[string]interface{})["location"] = map[string]interface{}{"lat": lat, "lng": lng}
+			}
+		}
 		insertManyResult, err := collection.InsertMany(context.Background(), result["data"].([]interface{}))
 		if err != nil {
 			log.Fatal(err)
